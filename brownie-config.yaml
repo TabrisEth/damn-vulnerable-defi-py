@@ -9,4 +9,4 @@ dotenv: .env
 networks:
     development:
       cmd_settings:
-        default_balance: 10000
+        default_balance: 100000000
