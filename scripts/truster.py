@@ -1,11 +1,11 @@
-from brownie import DamnValuableToken, TrusterLenderPool
+from brownie import DamnValuableToken, TrusterLenderPool, AttackTruster
 from web3 import Web3
 import time
 from scripts.helpful_scripts import get_accounts
 
 
 def deploy():
-    global deployer, pool, attacker, receiver, ETHER_IN_POOL, ETHER_IN_RECEIVER
+    global deployer, attacker, token, pool, TOKENS_IN_POOL
     [deployer, attacker] = get_accounts(2)
     # Pool has 1M * 10**18 tokens
     TOKENS_IN_POOL = Web3.toWei(1000000, "ether")
@@ -21,6 +21,8 @@ def deploy():
 
 def attack():
     # 攻击代码写到这里
+    attack_contract = AttackTruster.deploy({"from": attacker})
+    attack_contract.attack(token, pool, attacker).wait(1)
     return
 
 
