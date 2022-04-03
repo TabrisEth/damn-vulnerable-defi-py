@@ -13,7 +13,7 @@ from scripts.helpful_scripts import get_accounts
 
 
 def deploy():
-    global deployer, alice, bob, charlie, attacker, chain, rewarderPool, rewardToken
+    global deployer, alice, bob, charlie, attacker, therewarderPool, rewardToken
     [
         deployer,
         alice,
@@ -25,7 +25,6 @@ def deploy():
     users = [alice, bob, charlie, david]
     # Pool has 1M * 10**18 tokens
     TOKENS_IN_LENDER_POOL = Web3.toWei(1000000, "ether")
-    chain = Chain()
 
     # 开始部署
     liquidityToken = DamnValuableToken.deploy({"from": deployer})
@@ -34,14 +33,16 @@ def deploy():
     # Set initial token balance of the pool offering flash loans
     liquidityToken.transfer(flashLoanPool, TOKENS_IN_LENDER_POOL, {"from": deployer})
 
-    rewarderPool = TheRewarderPool.deploy(liquidityToken, {"from": deployer})
-    rewardToken = RewardToken.at(rewarderPool.rewardToken())
-    accountingToken = AccountingToken.at(rewarderPool.accToken())
+    therewarderPool = TheRewarderPool.deploy(liquidityToken, {"from": deployer})
+
+    # 文档： https://eth-brownie.readthedocs.io/en/stable/api-network.html#contractcontainer
+    rewardToken = RewardToken.at(therewarderPool.rewardToken())
+    accountingToken = AccountingToken.at(therewarderPool.accToken())
     for user in users:
         amount = Web3.toWei(100, "ether")
         liquidityToken.transfer(user, amount, {"from": deployer}).wait(1)
-        liquidityToken.approve(rewarderPool, amount, {"from": user}).wait(1)
-        rewarderPool.deposit(amount, {"from": user}).wait(1)
+        liquidityToken.approve(therewarderPool, amount, {"from": user}).wait(1)
+        therewarderPool.deposit(amount, {"from": user}).wait(1)
         assert accountingToken.balanceOf(user) == amount
 
     assert accountingToken.totalSupply() == Web3.toWei(400, "ether")
@@ -52,11 +53,11 @@ def deploy():
     web3.provider.make_request("evm_increaseTime", [sec_5_days])
 
     for user in users:
-        rewarderPool.distributeRewards({"from": user}).wait(1)
+        therewarderPool.distributeRewards({"from": user}).wait(1)
         assert rewardToken.balanceOf(user) == Web3.toWei(25, "ether")
 
     assert rewardToken.totalSupply() == Web3.toWei(100, "ether")
-    assert rewarderPool.roundNumber() == 2
+    assert therewarderPool.roundNumber() == 2
 
     return
 
