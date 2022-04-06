@@ -1,13 +1,12 @@
 from brownie import Exchange, DamnValuableNFT, TrustfulOracle, TrustfulOracleInitializer
 from web3 import Web3
-from brownie import web3
 from brownie.network.state import Chain
 import time
 from scripts.helpful_scripts import get_accounts
 
 
 def deploy():
-    global deployer, attacker, token, exchange
+    global deployer, attacker, token, exchange, INITIAL_NFT_PRICE
     sources = [
         "0xA73209FB1a42495120166736362A1DfA9F95A105",
         "0xe92401A4d3af5E446d93D11EEc806b1462b39D15",
@@ -17,7 +16,7 @@ def deploy():
         deployer,
         attacker,
     ] = get_accounts(2)
-    # Pool has 1M * 10**18 tokens
+    # init const
     EXCHANGE_INITIAL_ETH_BALANCE = Web3.toWei(10000, "ether")
     INITIAL_NFT_PRICE = Web3.toWei(999, "ether")
 
