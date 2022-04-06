@@ -17,11 +17,11 @@ def deploy():
         deployer,
         attacker,
     ] = get_accounts(2)
-    # Pool has 1M * 10**18 tokens
+    # init token
     TOKEN_INITIAL_SUPPLY = Web3.toWei(2000000, "ether")
     TOKENS_IN_POOL = Web3.toWei(1500000, "ether")
 
-    # 开始部署
+    # 开始部署 https://docs.openzeppelin.com/contracts/3.x/api/token/erc20#ERC20Snapshot
     token = DamnValuableTokenSnapshot.deploy(TOKEN_INITIAL_SUPPLY, {"from": deployer})
     governance = SimpleGovernance.deploy(token, {"from": deployer})
     pool = SelfiePool.deploy(token, governance, {"from": deployer})
